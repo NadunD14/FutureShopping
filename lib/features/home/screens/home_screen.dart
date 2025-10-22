@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_constants.dart';
-import '../../../core/services/ble_service.dart';
-import '../../../core/services/firestore_service.dart';
 import '../../../core/services/firebase_data_seeder.dart';
-import '../../../core/services/notification_service.dart';
 import '../../../core/models/product_model.dart';
+import '../../product/providers/product_provider.dart';
 import '../../product/screens/product_detail_screen.dart';
 import '../../comparison/screens/comparison_screen.dart';
 import '../../shopping_list/screens/shopping_list_screen.dart';
@@ -20,11 +18,6 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  Product? nearbyProduct;
-  List<Product> nearbyProducts = [];
-  bool isScanning = false;
-  String? activeBeaconId;
-
   @override
   void initState() {
     super.initState();
@@ -32,9 +25,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Future<void> _initializeApp() async {
-    // Initialize notification service
-    await NotificationService().initialize();
-
     // Ensure Firebase has sample data for testing
     await FirebaseDataSeeder.seedSampleData();
 
@@ -43,131 +33,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Future<void> _startBeaconScanning() async {
-    setState(() {
-      isScanning = true;
-    });
-
-    // Listen to beacon changes
-    BleService.instance.activeBeaconStream.listen((beaconId) async {
-      if (mounted) {
-        setState(() {
-          activeBeaconId = beaconId;
-          isScanning =
-              beaconId == null; // Stop showing scanning when beacon found
-        });
-
-        if (beaconId != null) {
-          print('Beacon detected: $beaconId - Fetching products...');
-          // Fetch products based on beacon category
-          final products = await _getProductsForBeacon(beaconId);
-          if (mounted) {
-            // Check if this is a new product change
-            final newProduct = products.isNotEmpty ? products.first : null;
-            final isNewProduct = nearbyProduct?.id != newProduct?.id;
-
-            setState(() {
-              nearbyProducts = products;
-              nearbyProduct = newProduct;
-            });
-
-            // Send notification for product change
-            if (isNewProduct && newProduct != null) {
-              _sendProductChangeNotification(newProduct);
-            }
-          }
-        } else {
-          if (mounted) {
-            setState(() {
-              nearbyProduct = null;
-              nearbyProducts = [];
-            });
-          }
-        }
-      }
-    });
-
-    // Start scanning
-    await BleService.instance.startScanning();
+    // Start scanning via provider
+    ref.read(bleScanningStateProvider.notifier).startScanning();
   }
 
   @override
   void dispose() {
-    BleService.instance.stopScanning();
+    // Stop scanning via provider
+    ref.read(bleScanningStateProvider.notifier).stopScanning();
     super.dispose();
   }
 
-  Future<List<Product>> _getProductsForBeacon(String beaconId) async {
-    try {
-      List<Product> products = [];
+  // Notifications disabled per requirement
 
-      // First try to get specific product by ID
-      final singleProduct =
-          await FirestoreService.instance.getProduct(beaconId);
-      if (singleProduct != null) {
-        products = [singleProduct];
-        print(
-            'Found specific product for beacon $beaconId: ${singleProduct.name}');
-        return products;
-      }
-
-      // If no specific product found, get products by category based on beacon ID
-      String category;
-      switch (beaconId) {
-        case '101':
-          category = 'Electronics';
-          break;
-        case '102':
-          category = 'Electronics'; // Fallback to Electronics for now
-          break;
-        case '103':
-          category = 'Electronics'; // Fallback to Electronics for now
-          break;
-        default:
-          category = 'Electronics'; // Default category
-      }
-
-      products =
-          await FirestoreService.instance.getProductsByCategory(category);
-
-      // If no products found by category, get all products as fallback
-      if (products.isEmpty) {
-        print(
-            'No products found for category $category, fetching all products');
-        products = await FirestoreService.instance.getAllProducts();
-      }
-
-      print('Found ${products.length} products for beacon $beaconId');
-      return products;
-    } catch (e) {
-      print('Error fetching products for beacon $beaconId: $e');
-      // Fallback: try to get all products
-      try {
-        final allProducts = await FirestoreService.instance.getAllProducts();
-        print('Fallback: Found ${allProducts.length} products');
-        return allProducts;
-      } catch (fallbackError) {
-        print('Fallback failed: $fallbackError');
-        return [];
-      }
-    }
-  }
-
-  /// Send notification when product changes
-  Future<void> _sendProductChangeNotification(Product product) async {
-    try {
-      await NotificationService().showProductChangeNotification(
-        productName: product.name,
-        productId: product.id,
-        price: AppConstants.formatPrice(product.price),
-      );
-    } catch (e) {
-      print('Error sending notification: $e');
-    }
-  }
-
-  Widget _buildNearbyProductCard() {
-    if (nearbyProduct == null) return const SizedBox.shrink();
-
+  Widget _buildNearbyProductCard(Product product) {
     return Container(
       margin: const EdgeInsets.all(AppConstants.paddingL),
       decoration: BoxDecoration(
@@ -235,7 +114,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        nearbyProduct!.name,
+                        product.name,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -245,7 +124,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '\$${nearbyProduct!.price.toStringAsFixed(2)}',
+                        '\$${product.price.toStringAsFixed(2)}',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -259,7 +138,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               color: Colors.orange.shade600, size: 16),
                           const SizedBox(width: 4),
                           Text(
-                            '${nearbyProduct!.rating} (${nearbyProduct!.reviewCount})',
+                            '${product.rating} (${product.reviewCount})',
                             style: TextStyle(
                               color: Colors.grey.shade600,
                               fontSize: 14,
@@ -290,7 +169,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     context,
                     MaterialPageRoute(
                       builder: (context) => ProductDetailScreen(
-                        productId: nearbyProduct!.id,
+                        productId: product.id,
                       ),
                     ),
                   );
@@ -317,6 +196,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Watch the active beacon and current product providers
+    final activeBeaconAsync = ref.watch(activeBeaconProvider);
+    final currentProductAsync = ref.watch(currentProductProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Smart Shopping'),
@@ -326,20 +209,53 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           Padding(
             padding: const EdgeInsets.only(right: 8.0),
             child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: activeBeaconId != null ? Colors.green : Colors.orange,
-                  borderRadius: BorderRadius.circular(12),
+              child: activeBeaconAsync.when(
+                data: (beaconId) => Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: beaconId != null ? Colors.green : Colors.orange,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    beaconId != null ? 'Beacon: $beaconId' : 'Scanning...',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
-                child: Text(
-                  activeBeaconId != null
-                      ? 'Beacon: $activeBeaconId'
-                      : 'Scanning...',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
+                loading: () => Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.orange,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text(
+                    'Scanning...',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                error: (_, __) => Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text(
+                    'Error',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -394,6 +310,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ],
               ),
+            ),
+
+            // Nearby Product Section (between welcome and quick actions)
+            currentProductAsync.when(
+              data: (product) {
+                if (product == null) return const SizedBox.shrink();
+
+                return _buildNearbyProductCard(product);
+              },
+              loading: () => const Padding(
+                padding: EdgeInsets.all(AppConstants.paddingL),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+              error: (error, stack) => const SizedBox.shrink(),
             ),
 
             // Quick Actions Section
@@ -509,9 +439,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ],
               ),
             ),
-
-            // Nearby Product Section (moved to bottom)
-            if (nearbyProduct != null) _buildNearbyProductCard(),
           ],
         ),
       ),

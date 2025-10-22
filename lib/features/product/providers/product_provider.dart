@@ -19,20 +19,23 @@ final activeBeaconProvider = StreamProvider<String?>((ref) {
   return bleService.activeBeaconStream;
 });
 
-// Current product provider based on active beacon
-final currentProductProvider = FutureProvider<Product?>((ref) async {
-  final activeBeaconAsync = ref.watch(activeBeaconProvider);
+// Current product provider based on active beacon (stream-based for responsiveness)
+final currentProductProvider = StreamProvider<Product?>((ref) async* {
+  final firestoreService = ref.watch(firestoreServiceProvider);
+  final beaconStream = ref.watch(activeBeaconProvider.stream);
 
-  return activeBeaconAsync.when(
-    data: (beaconId) async {
-      if (beaconId == null) return null;
-
-      final firestoreService = ref.watch(firestoreServiceProvider);
-      return await firestoreService.getProduct(beaconId);
-    },
-    loading: () => null,
-    error: (_, __) => null,
-  );
+  await for (final beaconId in beaconStream) {
+    if (beaconId == null) {
+      yield null;
+      continue;
+    }
+    try {
+      final product = await firestoreService.getProduct(beaconId);
+      yield product;
+    } catch (_) {
+      yield null;
+    }
+  }
 });
 
 // Product by ID provider (for direct access)
@@ -62,9 +65,9 @@ final allProductsProvider = FutureProvider<List<Product>>((ref) async {
 // Products for comparison provider
 final comparisonProductsProvider =
     FutureProvider.family<List<Product>, List<String>>((ref, productIds) async {
-      final firestoreService = ref.watch(firestoreServiceProvider);
-      return await firestoreService.getProducts(productIds);
-    });
+  final firestoreService = ref.watch(firestoreServiceProvider);
+  return await firestoreService.getProducts(productIds);
+});
 
 // Search products provider
 final searchProductsProvider = FutureProvider.family<List<Product>, String>((
@@ -92,9 +95,9 @@ final bluetoothStatusProvider = FutureProvider<bool>((ref) async {
 // Provider for managing BLE scanning state
 final bleScanningStateProvider =
     StateNotifierProvider<BleScanningStateNotifier, BleScanningState>((ref) {
-      final bleService = ref.watch(bleServiceProvider);
-      return BleScanningStateNotifier(bleService);
-    });
+  final bleService = ref.watch(bleServiceProvider);
+  return BleScanningStateNotifier(bleService);
+});
 
 // BLE scanning state
 enum BleScanningState { stopped, starting, scanning, error }
@@ -142,8 +145,8 @@ class BleScanningStateNotifier extends StateNotifier<BleScanningState> {
 // Provider for managing review form state
 final reviewFormProvider =
     StateNotifierProvider<ReviewFormNotifier, ReviewFormState>((ref) {
-      return ReviewFormNotifier();
-    });
+  return ReviewFormNotifier();
+});
 
 // Review form state
 class ReviewFormState {

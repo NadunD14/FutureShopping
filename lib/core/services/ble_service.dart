@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -18,9 +19,14 @@ class BleService {
       Duration(seconds: 3); // Reduced for faster response
   static const int rssiThreshold = -80; // More sensitive detection
   static const int hysteresisBuffer = 2; // Reduced buffer for faster switching
+  static const double distanceThresholdMeters = 0.7; // Only accept <= 0.7m
 
   String? _currentBeaconId;
   Map<String, int> _beaconRssiHistory = {};
+  final Map<String, DateTime> _beaconLastSeen = {};
+  static const Duration _staleDuration = Duration(seconds: 3);
+  final Map<String, int> _beaconTxPower = {}; // last known TxPower per beacon
+  final Map<String, double> _beaconDistance = {}; // last estimated distance
   Timer? _scanTimer;
   bool _isScanning = false;
 
@@ -171,13 +177,25 @@ class BleService {
       if (beaconId != null) {
         // Map the detected beacon ID to product ID
         String? mappedId = _mapBeaconToProduct(beaconId);
-        if (mappedId != null && rssi > strongestRssi) {
-          strongestBeaconId = mappedId;
-          strongestRssi = rssi;
-          _beaconRssiHistory[mappedId] = rssi;
+        if (mappedId != null) {
+          // Estimate distance (prefer parsed TxPower, fallback to -59)
+          final tx = _beaconTxPower[mappedId] ?? -59;
+          final distance = _estimateDistance(rssi, tx);
+          _beaconDistance[mappedId] = distance;
 
-          print(
-              'Found beacon: $beaconId mapped to product: $mappedId with RSSI: $rssi');
+          if (distance <= distanceThresholdMeters && rssi > strongestRssi) {
+            strongestBeaconId = mappedId;
+            strongestRssi = rssi;
+            _beaconRssiHistory[mappedId] = rssi;
+            _beaconLastSeen[mappedId] = DateTime.now();
+
+            print(
+                'Found beacon: $beaconId => product: $mappedId RSSI: $rssi, Tx: $tx, d≈${distance.toStringAsFixed(2)}m');
+          } else {
+            // Debug out-of-range beacons
+            print(
+                'Ignoring $beaconId=>${mappedId} d≈${distance.toStringAsFixed(2)}m (> ${distanceThresholdMeters}m)');
+          }
         }
       }
     }
@@ -185,6 +203,12 @@ class BleService {
     if (strongestBeaconId != null) {
       _updateActiveBeacon(strongestBeaconId, strongestRssi);
     }
+
+    // Clear current beacon if it hasn't been seen recently
+    _clearStaleBeaconIfNeeded();
+
+    // Also clear if current beacon is beyond distance threshold
+    _clearFarBeaconIfNeeded();
   }
 
   /// Extract beacon ID (Minor) from advertisement data or device name
@@ -206,6 +230,7 @@ class BleService {
         final uuidStart = 2;
         // final majorStart = 18; // kept for reference
         final minorStart = 20;
+        final txPowerIndex = 22;
 
         // Parse UUID to string for validation (optional but helpful for debugging)
         if (isIBeacon) {
@@ -215,6 +240,10 @@ class BleService {
           // If UUID is provided in config, prefer matches (ignore case)
           if (uuidStr.toUpperCase() == targetServiceUuid.toUpperCase()) {
             final minor = (data[minorStart] << 8) | data[minorStart + 1];
+            // Tx Power is signed int8
+            int tx = data[txPowerIndex];
+            if (tx > 127) tx -= 256;
+            _beaconTxPower[minor.toString()] = tx;
             // final major = (data[majorStart] << 8) | data[majorStart + 1];
             // Log once per detection for clarity
             // print('iBeacon detected UUID:$uuidStr Major:$major Minor:$minor');
@@ -222,6 +251,9 @@ class BleService {
           } else {
             // UUID doesn't match our target, but still parse minor as a fallback
             final minor = (data[minorStart] << 8) | data[minorStart + 1];
+            int tx = data[txPowerIndex];
+            if (tx > 127) tx -= 256;
+            _beaconTxPower[minor.toString()] = tx;
             if (minor > 0) return minor.toString();
           }
         } else {
@@ -230,6 +262,9 @@ class BleService {
           final minorHi = data[data.length - 3];
           final minorLo = data[data.length - 2];
           final minor = (minorHi << 8) | minorLo;
+          int tx = data.last;
+          if (tx > 127) tx -= 256;
+          _beaconTxPower[minor.toString()] = tx;
           if (minor > 0) return minor.toString();
         }
       }
@@ -254,6 +289,28 @@ class BleService {
 
     // 3) For testing: simulate beacon IDs based on device name
     return _simulateBeaconId(deviceName);
+  }
+
+  /// Estimate distance (meters) using RSSI and Tx Power (iBeacon style)
+  double _estimateDistance(int rssi, int txPower) {
+    if (rssi == 0) return 999.0; // cannot determine
+    final ratio = rssi / txPower; // both negative usually
+    if (ratio < 1.0) {
+      return math.pow(ratio, 10).toDouble();
+    } else {
+      return 0.89976 * math.pow(ratio, 7.7095).toDouble() + 0.111;
+    }
+  }
+
+  void _clearFarBeaconIfNeeded() {
+    if (_currentBeaconId == null) return;
+    final d = _beaconDistance[_currentBeaconId!];
+    if (d != null && d > distanceThresholdMeters) {
+      _currentBeaconId = null;
+      _activeBeaconController.add(null);
+      print(
+          'Active beacon cleared (distance ${d.toStringAsFixed(2)}m > ${distanceThresholdMeters}m)');
+    }
   }
 
   /// Format 16-byte UUID into canonical 8-4-4-4-12 hex string
@@ -297,6 +354,9 @@ class BleService {
 
   /// Update active beacon with hysteresis logic
   void _updateActiveBeacon(String beaconId, int rssi) {
+    // Update last seen for candidate
+    _beaconLastSeen[beaconId] = DateTime.now();
+
     if (_currentBeaconId == null) {
       // No current beacon, set this one
       _setActiveBeacon(beaconId);
@@ -305,7 +365,17 @@ class BleService {
       _beaconRssiHistory[beaconId] = rssi;
     } else {
       // Different beacon, check if it's significantly stronger
-      final currentRssi = _beaconRssiHistory[_currentBeaconId] ?? rssiThreshold;
+      final currentId = _currentBeaconId!;
+      int currentRssi = _beaconRssiHistory[currentId] ?? rssiThreshold;
+      final lastSeen = _beaconLastSeen[currentId];
+      final isStale = lastSeen == null ||
+          DateTime.now().difference(lastSeen) > _staleDuration;
+
+      // If current is stale, switch immediately
+      if (isStale) {
+        _setActiveBeacon(beaconId);
+        return;
+      }
 
       if (rssi > currentRssi + hysteresisBuffer) {
         _setActiveBeacon(beaconId);
@@ -319,6 +389,18 @@ class BleService {
       _currentBeaconId = beaconId;
       _activeBeaconController.add(beaconId);
       print('Active beacon changed to: $beaconId');
+    }
+  }
+
+  void _clearStaleBeaconIfNeeded() {
+    if (_currentBeaconId == null) return;
+    final lastSeen = _beaconLastSeen[_currentBeaconId!];
+    if (lastSeen == null) return;
+    if (DateTime.now().difference(lastSeen) > _staleDuration) {
+      // Clear current beacon when stale so UI can reset
+      _currentBeaconId = null;
+      _activeBeaconController.add(null);
+      print('Active beacon cleared due to staleness');
     }
   }
 

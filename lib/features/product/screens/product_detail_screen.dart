@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/models/product_model.dart';
-import '../../../core/services/notification_service.dart';
 import '../../../shared_widgets/loading_spinner.dart';
 import '../providers/product_provider.dart';
 import '../widgets/review_card_widget.dart';
@@ -22,8 +21,6 @@ class ProductDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
-  Product? _lastKnownProduct;
-
   @override
   void initState() {
     super.initState();
@@ -40,17 +37,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
     super.dispose();
   }
 
-  /// Send notification when product changes while user is viewing details
-  Future<void> _sendProductChangeNotification(Product product) async {
-    try {
-      await NotificationService().showProductChangeNotification(
-        productName: product.name,
-        productId: product.id,
-      );
-    } catch (e) {
-      print('Error sending notification: $e');
-    }
-  }
+  // Notifications disabled per requirement
 
   @override
   Widget build(BuildContext context) {
@@ -77,14 +64,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
             return _buildNoProductView();
           }
 
-          // Check if product changed and send notification
-          if (_lastKnownProduct != null &&
-              _lastKnownProduct!.id != product.id) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              _sendProductChangeNotification(product);
-            });
-          }
-          _lastKnownProduct = product;
+          // Product changes auto-render via provider; notifications disabled
 
           return _buildProductView(product);
         },
