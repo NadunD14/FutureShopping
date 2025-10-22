@@ -294,11 +294,12 @@ class BleService {
   /// Estimate distance (meters) using RSSI and Tx Power (iBeacon style)
   double _estimateDistance(int rssi, int txPower) {
     if (rssi == 0) return 999.0; // cannot determine
-    final ratio = rssi / txPower; // both negative usually
+    final ratio = rssi / txPower;
     if (ratio < 1.0) {
-      return math.pow(ratio, 10).toDouble();
+      return math.pow(ratio, 12).toDouble(); // Higher exponent
     } else {
-      return 0.89976 * math.pow(ratio, 7.7095).toDouble() + 0.111;
+      return 0.69976 * math.pow(ratio, 10).toDouble() +
+          0.111; // Smaller constant
     }
   }
 
