@@ -1,0 +1,610 @@
+{
+    "mall_config": {
+        "id": "westfield_mall_01",
+        "name": "Westfield Shopping Mall",
+        "bounds": {
+            "min_x": 0,
+            "min_y": 0,
+            "max_x": 500,
+            "max_y": 300
+        },
+        "pixel_to_meter_ratio": 10
+    },
+    "beacons": [
+        {
+            "id": "beacon_001",
+            "uuid": "E2C56DB5-DFFB-48D2-B060-D0F5A71096E0",
+            "major": 1,
+            "minor": 101,
+            "position": {
+                "x": 50,
+                "y": 50
+            },
+            "tx_power": -59,
+            "floor_level": 1
+        },
+        {
+            "id": "beacon_002",
+            "uuid": "E2C56DB5-DFFB-48D2-B060-D0F5A71096E0",
+            "major": 1,
+            "minor": 102,
+            "position": {
+                "x": 150,
+                "y": 50
+            },
+            "tx_power": -59,
+            "floor_level": 1
+        },
+        {
+            "id": "beacon_003",
+            "uuid": "E2C56DB5-DFFB-48D2-B060-D0F5A71096E0",
+            "major": 1,
+            "minor": 103,
+            "position": {
+                "x": 250,
+                "y": 50
+            },
+            "tx_power": -59,
+            "floor_level": 1
+        },
+        {
+            "id": "beacon_004",
+            "uuid": "E2C56DB5-DFFB-48D2-B060-D0F5A71096E0",
+            "major": 1,
+            "minor": 104,
+            "position": {
+                "x": 50,
+                "y": 150
+            },
+            "tx_power": -59,
+            "floor_level": 1
+        },
+        {
+            "id": "beacon_005",
+            "uuid": "E2C56DB5-DFFB-48D2-B060-D0F5A71096E0",
+            "major": 1,
+            "minor": 105,
+            "position": {
+                "x": 250,
+                "y": 150
+            },
+            "tx_power": -59,
+            "floor_level": 1
+        },
+        {
+            "id": "beacon_006",
+            "uuid": "E2C56DB5-DFFB-48D2-B060-D0F5A71096E0",
+            "major": 1,
+            "minor": 106,
+            "position": {
+                "x": 400,
+                "y": 100
+            },
+            "tx_power": -59,
+            "floor_level": 1
+        }
+    ],
+    "stores": [
+        {
+            "id": "store_001",
+            "name": "Apple Store",
+            "category": "Electronics",
+            "polygon": [
+                {
+                    "x": 40,
+                    "y": 40
+                },
+                {
+                    "x": 60,
+                    "y": 40
+                },
+                {
+                    "x": 60,
+                    "y": 60
+                },
+                {
+                    "x": 40,
+                    "y": 60
+                }
+            ],
+            "entrance_point": {
+                "x": 50,
+                "y": 40
+            },
+            "associated_beacons": [
+                "beacon_001"
+            ],
+            "floor_level": 1
+        },
+        {
+            "id": "store_002",
+            "name": "Nike Store",
+            "category": "Fashion",
+            "polygon": [
+                {
+                    "x": 140,
+                    "y": 40
+                },
+                {
+                    "x": 160,
+                    "y": 40
+                },
+                {
+                    "x": 160,
+                    "y": 60
+                },
+                {
+                    "x": 140,
+                    "y": 60
+                }
+            ],
+            "entrance_point": {
+                "x": 150,
+                "y": 40
+            },
+            "associated_beacons": [
+                "beacon_002"
+            ],
+            "floor_level": 1
+        },
+        {
+            "id": "store_003",
+            "name": "Starbucks",
+            "category": "Food & Beverage",
+            "polygon": [
+                {
+                    "x": 240,
+                    "y": 40
+                },
+                {
+                    "x": 260,
+                    "y": 40
+                },
+                {
+                    "x": 260,
+                    "y": 60
+                },
+                {
+                    "x": 240,
+                    "y": 60
+                }
+            ],
+            "entrance_point": {
+                "x": 250,
+                "y": 40
+            },
+            "associated_beacons": [
+                "beacon_003"
+            ],
+            "floor_level": 1
+        },
+        {
+            "id": "store_004",
+            "name": "H&M",
+            "category": "Fashion",
+            "polygon": [
+                {
+                    "x": 40,
+                    "y": 140
+                },
+                {
+                    "x": 60,
+                    "y": 140
+                },
+                {
+                    "x": 60,
+                    "y": 160
+                },
+                {
+                    "x": 40,
+                    "y": 160
+                }
+            ],
+            "entrance_point": {
+                "x": 50,
+                "y": 140
+            },
+            "associated_beacons": [
+                "beacon_004"
+            ],
+            "floor_level": 1
+        },
+        {
+            "id": "store_005",
+            "name": "Best Buy",
+            "category": "Electronics",
+            "polygon": [
+                {
+                    "x": 240,
+                    "y": 140
+                },
+                {
+                    "x": 260,
+                    "y": 140
+                },
+                {
+                    "x": 260,
+                    "y": 160
+                },
+                {
+                    "x": 240,
+                    "y": 160
+                }
+            ],
+            "entrance_point": {
+                "x": 250,
+                "y": 140
+            },
+            "associated_beacons": [
+                "beacon_005"
+            ],
+            "floor_level": 1
+        },
+        {
+            "id": "store_006",
+            "name": "McDonald's",
+            "category": "Food & Beverage",
+            "polygon": [
+                {
+                    "x": 390,
+                    "y": 90
+                },
+                {
+                    "x": 410,
+                    "y": 90
+                },
+                {
+                    "x": 410,
+                    "y": 110
+                },
+                {
+                    "x": 390,
+                    "y": 110
+                }
+            ],
+            "entrance_point": {
+                "x": 400,
+                "y": 90
+            },
+            "associated_beacons": [
+                "beacon_006"
+            ],
+            "floor_level": 1
+        }
+    ],
+    "walkable_paths": [
+        {
+            "id": "main_corridor_horizontal_top",
+            "nodes": [
+                {
+                    "x": 50,
+                    "y": 30
+                },
+                {
+                    "x": 150,
+                    "y": 30
+                },
+                {
+                    "x": 250,
+                    "y": 30
+                }
+            ],
+            "width": 6,
+            "floor_level": 1
+        },
+        {
+            "id": "main_corridor_horizontal_middle",
+            "nodes": [
+                {
+                    "x": 50,
+                    "y": 100
+                },
+                {
+                    "x": 150,
+                    "y": 100
+                },
+                {
+                    "x": 250,
+                    "y": 100
+                },
+                {
+                    "x": 350,
+                    "y": 100
+                },
+                {
+                    "x": 400,
+                    "y": 100
+                }
+            ],
+            "width": 8,
+            "floor_level": 1
+        },
+        {
+            "id": "main_corridor_horizontal_bottom",
+            "nodes": [
+                {
+                    "x": 50,
+                    "y": 170
+                },
+                {
+                    "x": 150,
+                    "y": 170
+                },
+                {
+                    "x": 250,
+                    "y": 170
+                }
+            ],
+            "width": 6,
+            "floor_level": 1
+        },
+        {
+            "id": "main_corridor_vertical_left",
+            "nodes": [
+                {
+                    "x": 50,
+                    "y": 30
+                },
+                {
+                    "x": 50,
+                    "y": 100
+                },
+                {
+                    "x": 50,
+                    "y": 170
+                }
+            ],
+            "width": 6,
+            "floor_level": 1
+        },
+        {
+            "id": "main_corridor_vertical_center",
+            "nodes": [
+                {
+                    "x": 150,
+                    "y": 30
+                },
+                {
+                    "x": 150,
+                    "y": 100
+                },
+                {
+                    "x": 150,
+                    "y": 170
+                }
+            ],
+            "width": 6,
+            "floor_level": 1
+        },
+        {
+            "id": "main_corridor_vertical_right",
+            "nodes": [
+                {
+                    "x": 250,
+                    "y": 30
+                },
+                {
+                    "x": 250,
+                    "y": 100
+                },
+                {
+                    "x": 250,
+                    "y": 170
+                }
+            ],
+            "width": 6,
+            "floor_level": 1
+        }
+    ],
+    "pathfinding_graph": {
+        "nodes": [
+            {
+                "id": "n1",
+                "x": 50,
+                "y": 30
+            },
+            {
+                "id": "n2",
+                "x": 150,
+                "y": 30
+            },
+            {
+                "id": "n3",
+                "x": 250,
+                "y": 30
+            },
+            {
+                "id": "n4",
+                "x": 50,
+                "y": 70
+            },
+            {
+                "id": "n5",
+                "x": 150,
+                "y": 70
+            },
+            {
+                "id": "n6",
+                "x": 250,
+                "y": 70
+            },
+            {
+                "id": "n7",
+                "x": 50,
+                "y": 100
+            },
+            {
+                "id": "n8",
+                "x": 150,
+                "y": 100
+            },
+            {
+                "id": "n9",
+                "x": 250,
+                "y": 100
+            },
+            {
+                "id": "n10",
+                "x": 350,
+                "y": 100
+            },
+            {
+                "id": "n11",
+                "x": 400,
+                "y": 100
+            },
+            {
+                "id": "n12",
+                "x": 50,
+                "y": 130
+            },
+            {
+                "id": "n13",
+                "x": 150,
+                "y": 130
+            },
+            {
+                "id": "n14",
+                "x": 250,
+                "y": 130
+            },
+            {
+                "id": "n15",
+                "x": 50,
+                "y": 170
+            },
+            {
+                "id": "n16",
+                "x": 150,
+                "y": 170
+            },
+            {
+                "id": "n17",
+                "x": 250,
+                "y": 170
+            }
+        ],
+        "edges": [
+            {
+                "from": "n1",
+                "to": "n2",
+                "cost": 100
+            },
+            {
+                "from": "n2",
+                "to": "n3",
+                "cost": 100
+            },
+            {
+                "from": "n1",
+                "to": "n4",
+                "cost": 40
+            },
+            {
+                "from": "n2",
+                "to": "n5",
+                "cost": 40
+            },
+            {
+                "from": "n3",
+                "to": "n6",
+                "cost": 40
+            },
+            {
+                "from": "n4",
+                "to": "n5",
+                "cost": 100
+            },
+            {
+                "from": "n5",
+                "to": "n6",
+                "cost": 100
+            },
+            {
+                "from": "n4",
+                "to": "n7",
+                "cost": 30
+            },
+            {
+                "from": "n5",
+                "to": "n8",
+                "cost": 30
+            },
+            {
+                "from": "n6",
+                "to": "n9",
+                "cost": 30
+            },
+            {
+                "from": "n7",
+                "to": "n8",
+                "cost": 100
+            },
+            {
+                "from": "n8",
+                "to": "n9",
+                "cost": 100
+            },
+            {
+                "from": "n9",
+                "to": "n10",
+                "cost": 100
+            },
+            {
+                "from": "n10",
+                "to": "n11",
+                "cost": 50
+            },
+            {
+                "from": "n7",
+                "to": "n12",
+                "cost": 30
+            },
+            {
+                "from": "n8",
+                "to": "n13",
+                "cost": 30
+            },
+            {
+                "from": "n9",
+                "to": "n14",
+                "cost": 30
+            },
+            {
+                "from": "n12",
+                "to": "n13",
+                "cost": 100
+            },
+            {
+                "from": "n13",
+                "to": "n14",
+                "cost": 100
+            },
+            {
+                "from": "n12",
+                "to": "n15",
+                "cost": 40
+            },
+            {
+                "from": "n13",
+                "to": "n16",
+                "cost": 40
+            },
+            {
+                "from": "n14",
+                "to": "n17",
+                "cost": 40
+            },
+            {
+                "from": "n15",
+                "to": "n16",
+                "cost": 100
+            },
+            {
+                "from": "n16",
+                "to": "n17",
+                "cost": 100
+            }
+        ]
+    }
+}

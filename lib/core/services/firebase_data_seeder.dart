@@ -158,6 +158,254 @@ class FirebaseDataSeeder {
     }
   }
 
+  /// Seed two shops with at least 10 items each:
+  /// - Shop 101: Clothing
+  /// - Shop 102: Electrical
+  /// Existing data was cleared by the user, so we only add documents (no deletes).
+  static Future<void> seedTwoShopsData() async {
+    try {
+      print('Seeding two shops (101: Clothing, 102: Electrical)...');
+
+      // Clothing items (Shop 101)
+      final clothing = <Product>[
+        Product(
+          id: 'C101-001',
+          name: 'Classic White T-Shirt',
+          price: 14.99,
+          description: '100% cotton crew neck tee, breathable and soft.',
+          imageUrl:
+              'https://images.unsplash.com/photo-1523381294911-8d3cead13475?w=800',
+          category: 'Clothing',
+          brand: 'BasicWear',
+          features: ['Cotton', 'Unisex', 'Machine Washable'],
+        ),
+        Product(
+          id: 'C101-002',
+          name: 'Slim Fit Jeans',
+          price: 49.99,
+          description: 'Stretch denim with slim fit cut for everyday comfort.',
+          imageUrl:
+              'https://images.unsplash.com/photo-1516826957135-700dedea698c?w=800',
+          category: 'Clothing',
+          brand: 'DenimCo',
+          features: ['Stretch', '5 Pockets', 'Mid Rise'],
+        ),
+        Product(
+          id: 'C101-003',
+          name: 'Hooded Sweatshirt',
+          price: 39.99,
+          description: 'Fleece-lined hoodie with kangaroo pocket.',
+          imageUrl:
+              'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=800',
+          category: 'Clothing',
+          brand: 'CozyFit',
+          features: ['Fleece', 'Drawstring Hood', 'Ribbed Cuffs'],
+        ),
+        Product(
+          id: 'C101-004',
+          name: 'Athletic Sneakers',
+          price: 69.99,
+          description: 'Lightweight trainers for running and gym.',
+          imageUrl:
+              'https://images.unsplash.com/photo-1528701800489-20be3c2ea4b5?w=800',
+          category: 'Clothing',
+          brand: 'RunFast',
+          features: ['Mesh Upper', 'Foam Midsole', 'Non-slip'],
+        ),
+        Product(
+          id: 'C101-005',
+          name: 'Casual Chinos',
+          price: 44.99,
+          description: 'Versatile chinos with tapered leg.',
+          imageUrl:
+              'https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?w=800',
+          category: 'Clothing',
+          brand: 'SmartWear',
+          features: ['Tapered', 'Breathable', '2 Side Pockets'],
+        ),
+        Product(
+          id: 'C101-006',
+          name: 'Denim Jacket',
+          price: 59.99,
+          description: 'Classic denim jacket with metal buttons.',
+          imageUrl:
+              'https://images.unsplash.com/photo-1520975618319-27b9c5f5f77b?w=800',
+          category: 'Clothing',
+          brand: 'DenimCo',
+          features: ['Classic Fit', 'Chest Pockets', 'Durable'],
+        ),
+        Product(
+          id: 'C101-007',
+          name: 'Formal Shirt',
+          price: 34.99,
+          description: 'Slim-fit non-iron cotton shirt.',
+          imageUrl:
+              'https://images.unsplash.com/photo-1520975682134-148c8b3f83d1?w=800',
+          category: 'Clothing',
+          brand: 'OfficeLine',
+          features: ['Non-Iron', 'Slim Fit', 'Button Cuffs'],
+        ),
+        Product(
+          id: 'C101-008',
+          name: 'Summer Dress',
+          price: 39.99,
+          description: 'Floral print A-line summer dress.',
+          imageUrl:
+              'https://images.unsplash.com/photo-1520975610246-6f8d0c49f1f5?w=800',
+          category: 'Clothing',
+          brand: 'SunStyle',
+          features: ['A-Line', 'Lightweight', 'Floral Print'],
+        ),
+        Product(
+          id: 'C101-009',
+          name: 'Leather Belt',
+          price: 19.99,
+          description: 'Genuine leather belt with metal buckle.',
+          imageUrl:
+              'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800',
+          category: 'Clothing',
+          brand: 'Crafted',
+          features: ['Genuine Leather', 'Adjustable', 'Durable Buckle'],
+        ),
+        Product(
+          id: 'C101-010',
+          name: 'Wool Beanie',
+          price: 14.99,
+          description: 'Warm knit beanie for cold days.',
+          imageUrl:
+              'https://images.unsplash.com/photo-1519683105970-3d4727e72436?w=800',
+          category: 'Clothing',
+          brand: 'CozyFit',
+          features: ['Wool Blend', 'One Size', 'Ribbed Knit'],
+        ),
+      ];
+
+      // Electrical items (Shop 102)
+      final electrical = <Product>[
+        Product(
+          id: 'E102-001',
+          name: 'LED Smart TV 55"',
+          price: 499.99,
+          description: '4K UHD Smart TV with HDR and streaming apps.',
+          imageUrl:
+              'https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=800',
+          category: 'Electrical',
+          brand: 'VisionTech',
+          features: ['4K HDR', 'Smart Apps', '3x HDMI'],
+        ),
+        Product(
+          id: 'E102-002',
+          name: 'Bluetooth Speaker',
+          price: 59.99,
+          description: 'Portable wireless speaker with deep bass.',
+          imageUrl:
+              'https://images.unsplash.com/photo-1518441982128-6f6f1c4e4e51?w=800',
+          category: 'Electrical',
+          brand: 'SoundGo',
+          features: ['Water Resistant', '12h Battery', 'Bluetooth 5.0'],
+        ),
+        Product(
+          id: 'E102-003',
+          name: 'Air Fryer 5L',
+          price: 89.99,
+          description: 'Oil-less cooking with multiple presets.',
+          imageUrl:
+              'https://images.unsplash.com/photo-1604908177306-1ec2a029634b?w=800',
+          category: 'Electrical',
+          brand: 'KitchenPro',
+          features: ['Rapid Air', 'Non-stick Basket', 'Timer'],
+        ),
+        Product(
+          id: 'E102-004',
+          name: 'Robot Vacuum',
+          price: 199.99,
+          description: 'Auto vacuum with app control and scheduling.',
+          imageUrl:
+              'https://images.unsplash.com/photo-1583947215259-38e31be8751c?w=800',
+          category: 'Electrical',
+          brand: 'CleanBot',
+          features: ['App Control', 'Edge Cleaning', 'Auto Dock'],
+        ),
+        Product(
+          id: 'E102-005',
+          name: 'Microwave Oven 30L',
+          price: 129.99,
+          description: 'Digital microwave with grill function.',
+          imageUrl:
+              'https://images.unsplash.com/photo-1601050690597-9d36a5e3f28d?w=800',
+          category: 'Electrical',
+          brand: 'CookMaster',
+          features: ['Grill', 'Child Lock', 'Auto Menus'],
+        ),
+        Product(
+          id: 'E102-006',
+          name: 'Smartphone Charger 30W',
+          price: 24.99,
+          description: 'Fast USB-C charger with Power Delivery.',
+          imageUrl:
+              'https://images.unsplash.com/photo-1611175694988-dcec08f31ee9?w=800',
+          category: 'Electrical',
+          brand: 'ChargeUp',
+          features: ['30W PD', 'Compact', 'Safety Protections'],
+        ),
+        Product(
+          id: 'E102-007',
+          name: 'Wireless Earbuds',
+          price: 79.99,
+          description: 'True wireless earbuds with noise isolation.',
+          imageUrl:
+              'https://images.unsplash.com/photo-1585386959984-a41552231604?w=800',
+          category: 'Electrical',
+          brand: 'AudioLite',
+          features: ['Touch Controls', 'Charging Case', 'AAC'],
+        ),
+        Product(
+          id: 'E102-008',
+          name: 'Gaming Keyboard',
+          price: 59.99,
+          description: 'Mechanical keyboard with RGB lighting.',
+          imageUrl:
+              'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=800',
+          category: 'Electrical',
+          brand: 'KeyPro',
+          features: ['Mechanical', 'RGB', 'Anti-Ghosting'],
+        ),
+        Product(
+          id: 'E102-009',
+          name: 'Action Camera 4K',
+          price: 149.99,
+          description: 'Waterproof 4K action camera with stabilization.',
+          imageUrl:
+              'https://images.unsplash.com/photo-1508896694512-5d56c1d16846?w=800',
+          category: 'Electrical',
+          brand: 'AdventureCam',
+          features: ['4K 60fps', 'Waterproof', 'Stabilization'],
+        ),
+        Product(
+          id: 'E102-010',
+          name: 'Smart Home Plug',
+          price: 19.99,
+          description: 'Wi‑Fi plug compatible with voice assistants.',
+          imageUrl:
+              'https://images.unsplash.com/photo-1517059224940-d4af9eec41e5?w=800',
+          category: 'Electrical',
+          brand: 'HomeLink',
+          features: ['Wi‑Fi', 'Energy Monitor', 'Schedules'],
+        ),
+      ];
+
+      // Write all products
+      for (final p in [...clothing, ...electrical]) {
+        await _firestore.collection('products').doc(p.id).set(p.toJson());
+        print('Added product: ${p.name} (${p.id})');
+      }
+
+      print('Two shops seeding completed.');
+    } catch (e) {
+      print('Error seeding two shops: $e');
+    }
+  }
+
   /// Add sample reviews for products
   static Future<void> _addSampleReviews() async {
     final sampleReviews = [

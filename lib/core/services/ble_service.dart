@@ -10,6 +10,8 @@ class BleService {
 
   final StreamController<String?> _activeBeaconController =
       StreamController<String?>.broadcast();
+  final StreamController<Map<String, double>> _proximityController =
+      StreamController<Map<String, double>>.broadcast();
   StreamSubscription<List<ScanResult>>? _scanSubscription;
 
   // Configuration for actual beacon detection
@@ -32,6 +34,10 @@ class BleService {
 
   /// Stream of active beacon Minor IDs
   Stream<String?> get activeBeaconStream => _activeBeaconController.stream;
+
+  /// Stream of last estimated distances (meters) per mapped beacon id (e.g., '101','102')
+  Stream<Map<String, double>> get beaconDistancesStream =>
+      _proximityController.stream;
 
   /// Get current active beacon ID
   String? get currentBeaconId => _currentBeaconId;
@@ -182,6 +188,8 @@ class BleService {
           final tx = _beaconTxPower[mappedId] ?? -59;
           final distance = _estimateDistance(rssi, tx);
           _beaconDistance[mappedId] = distance;
+          // Emit current distances snapshot
+          _proximityController.add(Map<String, double>.from(_beaconDistance));
 
           if (distance <= distanceThresholdMeters && rssi > strongestRssi) {
             strongestBeaconId = mappedId;
@@ -334,21 +342,16 @@ class BleService {
 
   /// Map detected beacon values to product IDs
   String? _mapBeaconToProduct(String beaconId) {
-    // Map the detected beacon values to expected product IDs
+    // Map both direct minors and your hardware minors to two shops:
+    // 101 => Clothing, 102 => Electrical
     switch (beaconId) {
-      case '25864': // Maps to product 101
+      case '101':
+      case '25864':
         return '101';
-      case '26120': // Maps to product 102
+      case '102':
+      case '26120':
         return '102';
-      case '26376': // Maps to product 103
-        return '103';
-      case '21893': // Another detected value, map to 101 for testing
-        return '104';
       default:
-        // If it's already a valid product ID (101-105), return as is
-        if (['101', '102', '103', '104', '105'].contains(beaconId)) {
-          return beaconId;
-        }
         return null;
     }
   }
@@ -420,6 +423,7 @@ class BleService {
   void dispose() {
     stopScanning();
     _activeBeaconController.close();
+    _proximityController.close();
   }
 
   /// Simulate beacon detection for testing

@@ -8,6 +8,7 @@ import '../../product/providers/product_provider.dart';
 import '../../product/screens/product_detail_screen.dart';
 import '../../comparison/screens/comparison_screen.dart';
 import '../../shopping_list/screens/shopping_list_screen.dart';
+import '../../mall_navigation/mall_navigation_demo_page.dart';
 
 /// Home screen - main welcome screen of the app
 class HomeScreen extends ConsumerStatefulWidget {
@@ -26,7 +27,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Future<void> _initializeApp() async {
     // Ensure Firebase has sample data for testing
-    await FirebaseDataSeeder.seedSampleData();
+    // Seed two shops with 10+ items each
+    await FirebaseDataSeeder.seedTwoShopsData();
 
     // Start BLE scanning
     _startBeaconScanning();
@@ -199,6 +201,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // Watch the active beacon and current product providers
     final activeBeaconAsync = ref.watch(activeBeaconProvider);
     final currentProductAsync = ref.watch(currentProductProvider);
+    final relPosAsync = ref.watch(twoBeaconRelativePositionProvider);
+    final closestShopAsync = ref.watch(closestShopCategoryProvider);
+    final closestShopItemsAsync = ref.watch(closestShopProductsProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -326,6 +331,39 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               error: (error, stack) => const SizedBox.shrink(),
             ),
 
+            // Closest Shop proximity + items
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppConstants.paddingL,
+                vertical: AppConstants.paddingM,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Nearest Shop', style: AppConstants.titleLarge),
+                  const SizedBox(height: AppConstants.paddingS),
+                  _buildProximityIndicator(relPosAsync, closestShopAsync),
+                  const SizedBox(height: AppConstants.paddingM),
+                  closestShopItemsAsync.when(
+                    data: (items) {
+                      if (items.isEmpty) {
+                        return const Text(
+                            'Move closer to a shop to see items.');
+                      }
+                      return _buildProductsGrid(items);
+                    },
+                    loading: () => const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(AppConstants.paddingM),
+                        child: CircularProgressIndicator(),
+                      ),
+                    ),
+                    error: (e, st) => const SizedBox.shrink(),
+                  ),
+                ],
+              ),
+            ),
+
             // Quick Actions Section
             Padding(
               padding: const EdgeInsets.all(AppConstants.paddingL),
@@ -389,6 +427,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         subtitle: 'App preferences',
                         onTap: () {
                           _showSettingsDialog(context);
+                        },
+                      ),
+                      // NEW: Mall Navigation Card
+                      _buildActionCard(
+                        icon: Icons.map,
+                        title: 'Mall Navigation',
+                        subtitle: 'Indoor navigation demo',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const MallNavigationDemoPage(),
+                            ),
+                          );
                         },
                       ),
                     ],
@@ -482,6 +535,139 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildProximityIndicator(
+    AsyncValue<double?> relPosAsync,
+    AsyncValue<String?> closestShopAsync,
+  ) {
+    final t = relPosAsync.value;
+    final closest = closestShopAsync.value;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppConstants.paddingM),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: const [
+                Text('Clothing (101)'),
+                Text('Electrical (102)'),
+              ],
+            ),
+            const SizedBox(height: AppConstants.paddingS),
+            SizedBox(
+              height: 36,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final width = constraints.maxWidth;
+                  final dx = t == null ? null : (t.clamp(0.0, 1.0) * width);
+                  return Stack(
+                    children: [
+                      // Track
+                      Positioned.fill(
+                        top: 16,
+                        child: Container(
+                          height: 4,
+                          color: Colors.grey.shade300,
+                        ),
+                      ),
+                      // Dot
+                      if (dx != null)
+                        Positioned(
+                          left: (dx - 8).clamp(0.0, width - 16),
+                          top: 8,
+                          child: Container(
+                            width: 16,
+                            height: 16,
+                            decoration: const BoxDecoration(
+                              color: AppConstants.primaryColor,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: AppConstants.paddingS),
+            Text(
+              closest != null
+                  ? 'Closest shop: $closest'
+                  : 'No beacons detected yet',
+              style: AppConstants.bodyMedium,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProductsGrid(List<Product> products) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: AppConstants.paddingM,
+        crossAxisSpacing: AppConstants.paddingM,
+        childAspectRatio: 0.75,
+      ),
+      itemCount: products.length,
+      itemBuilder: (context, index) {
+        final p = products[index];
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ProductDetailScreen(productId: p.id),
+              ),
+            );
+          },
+          child: Card(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Image placeholder
+                AspectRatio(
+                  aspectRatio: 1,
+                  child: Container(
+                    color: Colors.grey.shade200,
+                    child:
+                        const Icon(Icons.image, size: 48, color: Colors.grey),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(AppConstants.paddingS),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        p.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppConstants.bodyMedium,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '\$${p.price.toStringAsFixed(2)}',
+                        style: AppConstants.titleMedium.copyWith(
+                          color: Colors.green.shade700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

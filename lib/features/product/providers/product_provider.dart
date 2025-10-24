@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:async/async.dart';
 import '../../../core/services/firestore_service.dart';
 import '../../../core/services/ble_service.dart';
 import '../../../core/models/product_model.dart';
@@ -17,6 +18,91 @@ final bleServiceProvider = Provider<BleService>((ref) {
 final activeBeaconProvider = StreamProvider<String?>((ref) {
   final bleService = ref.watch(bleServiceProvider);
   return bleService.activeBeaconStream;
+});
+
+// Beacon distances stream (meters) keyed by mapped beacon id ('101','102')
+final beaconDistancesProvider = StreamProvider<Map<String, double>>((ref) {
+  final bleService = ref.watch(bleServiceProvider);
+  return bleService.beaconDistancesStream;
+});
+
+// Derive closest shop category from beacon distances or active beacon
+final closestShopCategoryProvider = StreamProvider<String?>((ref) async* {
+  final distancesStream = ref.watch(beaconDistancesProvider.stream);
+  final activeBeaconStream = ref.watch(activeBeaconProvider.stream);
+
+  // Merge two streams in a simple loop by awaiting whichever emits first
+  Map<String, double> lastDistances = const {};
+  String? lastActive;
+
+  await for (final _ in StreamGroup.merge([
+    distancesStream.map((d) => 'd'),
+    activeBeaconStream.map((a) => 'a'),
+  ])) {
+    // Update snapshots
+    final d = await distancesStream.first;
+    lastDistances = d;
+    lastActive = await activeBeaconStream.first;
+
+    String? shop;
+    if (lastDistances.containsKey('101') || lastDistances.containsKey('102')) {
+      final d1 = lastDistances['101'] ?? double.infinity;
+      final d2 = lastDistances['102'] ?? double.infinity;
+      if (d1 == double.infinity && d2 == double.infinity) {
+        shop = null;
+      } else if (d1 <= d2) {
+        shop = 'Clothing';
+      } else {
+        shop = 'Electrical';
+      }
+    } else if (lastActive == '101' || lastActive == '102') {
+      shop = lastActive == '101' ? 'Clothing' : 'Electrical';
+    } else {
+      shop = null;
+    }
+    yield shop;
+  }
+});
+
+// Relative position between two beacons (0.0 near 101, 1.0 near 102)
+final twoBeaconRelativePositionProvider = StreamProvider<double?>((ref) async* {
+  final distancesStream = ref.watch(beaconDistancesProvider.stream);
+  await for (final distances in distancesStream) {
+    final d1 = distances['101'];
+    final d2 = distances['102'];
+    if (d1 == null && d2 == null) {
+      yield null;
+    } else if (d1 != null && d2 != null && d1.isFinite && d2.isFinite) {
+      final sum = d1 + d2;
+      if (sum <= 0) {
+        yield 0.5;
+      } else {
+        // Inverse-distance weighting mapped to [0,1]
+        final w1 = 1.0 / (d1 + 1e-6);
+        final w2 = 1.0 / (d2 + 1e-6);
+        final t = w2 / (w1 + w2); // 0 near 101, 1 near 102
+        yield t.clamp(0.0, 1.0);
+      }
+    } else if (d1 != null) {
+      yield 0.0;
+    } else if (d2 != null) {
+      yield 1.0;
+    } else {
+      yield null;
+    }
+  }
+});
+
+// Products for the closest shop category
+final closestShopProductsProvider = FutureProvider<List<Product>>((ref) async {
+  final firestoreService = ref.watch(firestoreServiceProvider);
+  final shopCategoryAsync = ref.watch(closestShopCategoryProvider);
+  final shopCategory = await shopCategoryAsync.maybeWhen(
+    data: (v) => v,
+    orElse: () => null,
+  );
+  if (shopCategory == null) return [];
+  return firestoreService.getProductsByCategory(shopCategory);
 });
 
 // Current product provider based on active beacon (stream-based for responsiveness)

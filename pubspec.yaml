@@ -1,5 +1,5 @@
 name: future_shopping2
-description: Smart Shopping App with BLE beacon detection
+description: Smart Shopping App with BLE beacon detection and Mall Navigation
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -21,6 +21,31 @@ dependencies:
   cached_network_image: ^3.3.0
   uuid: ^4.2.1
   flutter_local_notifications: ^17.2.2
+  
+  # NEW PACKAGES FOR MALL NAVIGATION:
+  # 2D Map Rendering
+  flutter_map: ^6.1.0           # Leaflet-based mapping solution
+  latlong2: ^0.9.1              # For coordinate calculations (updated to compatible version)
+  
+  # Enhanced collections (built-in, no need to add)
+  # collection: ^1.17.2         # Already included in Flutter SDK
+  
+  # Pathfinding & Graph Algorithms
+  graphs: ^2.3.1                # Graph data structures and A* pathfinding
+  
+  # Vector Math & Geometry (built-in)
+  # vector_math: ^2.1.4         # Already included in Flutter SDK
+  
+  # Data Storage & Caching
+  sqflite: ^2.3.0               # Local database for mall data
+  shared_preferences: ^2.2.2    # Store user preferences
+  
+  # Map Overlays & Custom Widgets
+  flutter_svg: ^2.0.9           # SVG support for custom map icons
+  
+  # Performance & Smoothing
+  flutter_animate: ^4.2.0       # Smooth animations for position updates
+  async: ^2.11.0                # StreamGroup utilities for merging streams
 
 dev_dependencies:
   flutter_test:
@@ -29,3 +54,8 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  
+  # Add assets for mall configuration
+  assets:
+    - assets/
+    - assets/mall_config.json
